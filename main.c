@@ -16,13 +16,26 @@ extern const char _sromfs;
 
 static void setup_hardware();
 
+volatile xQueueHandle serial_str_queue = NULL;
 volatile xSemaphoreHandle serial_tx_wait_sem = NULL;
+volatile xQueueHandle serial_rx_queue = NULL;
+
+/* Queue structure used for passing messages. */
+typedef struct {
+	char str[100];
+} serial_str_msg;
+
+/* Queue structure used for passing characters. */
+typedef struct {
+	char ch;
+} serial_ch_msg;
 
 
 /* IRQ handler to handle USART2 interruptss (both transmit and receive
  * interrupts). */
 void USART2_IRQHandler()
 {
+	serial_ch_msg rx_msg;
 	static signed portBASE_TYPE xHigherPriorityTaskWoken;
 
 	/* If this interrupt is for a transmit... */
@@ -34,7 +47,19 @@ void USART2_IRQHandler()
 
 		/* Diables the transmit interrupt. */
 		USART_ITConfig(USART2, USART_IT_TXE, DISABLE);
-		/* If this interrupt is for a receive... */
+		
+	}
+	/* If this interrupt is for a receive... */
+	else if  (USART_GetITStatus(USART2, USART_IT_RXNE) != RESET) {
+		/* Receive the byte from the buffer. */
+		rx_msg.ch = USART_ReceiveData(USART2);
+
+		/* Queue the received byte. */
+		if(!xQueueSendToBackFromISR(serial_rx_queue, &rx_msg, &xHigherPriorityTaskWoken)) {
+			/* If there was an error queueing the received byte,
+			 * freeze. */
+			while(1);	
+		}	
 	}
 	else {
 		/* Only transmit and receive interrupts should be enabled.
