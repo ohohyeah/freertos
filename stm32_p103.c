@@ -106,7 +106,8 @@ void enable_rs232_interrupts(void)
     NVIC_InitTypeDef NVIC_InitStructure;
 
     /* Enable transmit and receive interrupts for the USART2. */
-    USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
+    USART_ITConfig(USART2, USART_IT_TXE, DISABLE);
+    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
 
     /* Enable the USART2 IRQ in the NVIC module (so that the USART2 interrupt
      * handler is enabled). */

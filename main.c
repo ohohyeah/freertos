@@ -30,6 +30,22 @@ typedef struct {
 	char ch;
 } serial_ch_msg;
 
+void queue_str_task(const char *str, int delay)
+{
+	serial_str_msg msg;
+
+	/* Prepare the message to be queued. */
+	strcpy(msg.str, str);
+
+	while (1) {
+		/* Post the message.  Keep on trying until it is successful. */
+		while (!xQueueSendToBack(serial_str_queue, &msg,
+		       portMAX_DELAY));
+
+		/* Wait. */
+		vTaskDelay(delay);
+	}
+}
 
 /* IRQ handler to handle USART2 interruptss (both transmit and receive
  * interrupts). */
@@ -88,6 +104,17 @@ void send_byte(char ch)
 	USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
 }
 
+char receive_byte()
+{
+	serial_ch_msg msg;
+
+	/* Wait for a byte to be queued by the receive interrupts handler. */
+	while (!xQueueReceive(serial_rx_queue, &msg, portMAX_DELAY));
+
+	return msg.ch;
+}
+
+
 void read_romfs_task(void *pvParameters)
 {
 	char buf[128];
@@ -125,6 +152,52 @@ void rs232_xmit_msg_task(void *pvParameters)
 	}
 }
 
+void serial_readwrite_task(void *pvParameters)
+{
+	serial_str_msg msg;
+	char ch;
+	int curr_char;
+	int done;
+
+	/* Prepare the response message to be queued. */
+	strcpy(msg.str, "Got:");
+
+	while (1) {
+		curr_char = 4;
+		done = 0;
+		do {
+			/* Receive a byte from the RS232 port (this call will
+			 * block). */
+			ch = receive_byte();
+
+			/* If the byte is an end-of-line type character, then
+			 * finish the string and inidcate we are done.
+			 */
+			if ((ch == '\r') || (ch == '\n')) {
+				msg.str[curr_char] = '\n';
+				msg.str[curr_char+1] = '\0';
+				done = -1;
+				/* Otherwise, add the character to the
+				 * response string. */
+			}
+			else {
+				msg.str[curr_char++] = ch;
+			}
+		} while (!done);
+
+		/* Once we are done building the response string, queue the
+		 * response to be sent to the RS232 port.
+		 */
+		
+		while (!xQueueSendToBack(serial_str_queue, &msg,
+		                         portMAX_DELAY));
+	}
+}
+void queue_str_task1(void *pvParameters)
+{
+	queue_str_task("Hello 1\n", 200);
+}
+
 
 
 int main()
@@ -135,23 +208,37 @@ int main()
 	
 	fs_init();
 	fio_init();
+
+	/* Create the queue used by the serial task.  Messages for write to
+	 * the RS232. */
+	serial_str_queue = xQueueCreate(10, sizeof(serial_str_msg));
+	vSemaphoreCreateBinary(serial_tx_wait_sem);
+	serial_rx_queue = xQueueCreate(1, sizeof(serial_ch_msg));
 	
-	register_romfs("romfs", &_sromfs);
+//	register_romfs("romfs", &_sromfs);
 	
 	/* Create the queue used by the serial task.  Messages for write to
 	 * the RS232. */
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
 
 	/* Create a task to  read from romfs. */
-	xTaskCreate(read_romfs_task,
-	            (signed portCHAR *) "Read romfs",
-	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
+	//xTaskCreate(read_romfs_task,
+	  //          (signed portCHAR *) "Read romfs",
+	    //        512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
+
 
 	/* Create a task to write messages from the queue to the RS232 port. */
 	xTaskCreate(rs232_xmit_msg_task,
 	            (signed portCHAR *) "Serial Xmit Str",
 	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
 	
+	/* Create a task to receive characters from the RS232 port and echo
+	 * them back to the RS232 port. */
+	xTaskCreate(serial_readwrite_task,
+	            (signed portCHAR *) "Serial Read/Write",
+	            512 /* stack size */, NULL,
+	            tskIDLE_PRIORITY + 10, NULL);
+
 	/* Start running the tasks. */
 	vTaskStartScheduler();
 
