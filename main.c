@@ -193,10 +193,6 @@ void serial_readwrite_task(void *pvParameters)
 		                         portMAX_DELAY));
 	}
 }
-void queue_str_task1(void *pvParameters)
-{
-	queue_str_task("Hello 1\n", 200);
-}
 
 
 
