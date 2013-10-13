@@ -104,6 +104,29 @@ void read_romfs_task(void *pvParameters)
 	while (1);
 }
 
+
+void rs232_xmit_msg_task(void *pvParameters)
+{
+	serial_str_msg msg;
+	int curr_char;
+
+	while (1) {
+		/* Read from the queue.  Keep trying until a message is
+		 * received.  This will block for a period of time (specified
+		 * by portMAX_DELAY). */
+		while (!xQueueReceive(serial_str_queue, &msg, portMAX_DELAY));
+
+		/* Write each character of the message to the RS232 port. */
+		curr_char = 0;
+		while (msg.str[curr_char] != '\0') {
+			send_byte(msg.str[curr_char]);
+			curr_char++;
+		}
+	}
+}
+
+
+
 int main()
 {
 	init_rs232();
@@ -119,11 +142,16 @@ int main()
 	 * the RS232. */
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
 
-	/* Create a task to output text read from romfs. */
+	/* Create a task to  read from romfs. */
 	xTaskCreate(read_romfs_task,
 	            (signed portCHAR *) "Read romfs",
 	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
 
+	/* Create a task to write messages from the queue to the RS232 port. */
+	xTaskCreate(rs232_xmit_msg_task,
+	            (signed portCHAR *) "Serial Xmit Str",
+	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
+	
 	/* Start running the tasks. */
 	vTaskStartScheduler();
 
