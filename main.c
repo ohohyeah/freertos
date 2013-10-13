@@ -186,13 +186,20 @@ void shell_task(void *pvParameters)
 			/* If the byte is an end-of-line type character, then
 			 * finish the string and inidcate we are done.
 			 */
-			if ((ch == '\r') || (ch == '\n')) {
+			if ((ch == '\r') || (ch == '\n')) 
+			{
 				msg.str[curr_char] = '\0';
 				//msg.str[curr_char+1] = '\0';
 				done = -1;
 				/* Otherwise, add the character to the
 				 * response string. */
+			
 				send_msg("\n\r");
+			}			
+			else if(ch == "\b" || ch==127 )
+			{
+				curr_char--;
+				send_msg("\b \b");
 			}
 			else {
 				msg.str[curr_char++] = ch;			
