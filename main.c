@@ -89,6 +89,7 @@ void USART2_IRQHandler()
 	}
 }
 
+
 void send_byte(char ch)
 {
 	/* Wait until the RS232 port can receive another byte (this semaphore
@@ -102,6 +103,16 @@ void send_byte(char ch)
 	 */
 	USART_SendData(USART2, ch);
 	USART_ITConfig(USART2, USART_IT_TXE, ENABLE);
+}
+
+void send_msg(char *msg)
+{
+	int count = 0;
+	while(msg[count] != '\0')
+	{
+		send_byte(msg[count++]);
+	}
+
 }
 
 char receive_byte()
@@ -152,6 +163,7 @@ void rs232_xmit_msg_task(void *pvParameters)
 	}
 }
 
+
 void shell_task(void *pvParameters)
 {
 	serial_str_msg msg;
@@ -160,11 +172,12 @@ void shell_task(void *pvParameters)
 	int done;
 
 	/* Prepare the response message to be queued. */
-	strcpy(msg.str, "Got:");
+	//strcpy(msg.str, "Got:");
 
 	while (1) {
-		curr_char = 4;
+		curr_char = 0;
 		done = 0;
+		send_msg("shell>");
 		do {
 			/* Receive a byte from the RS232 port (this call will
 			 * block). */
@@ -174,23 +187,22 @@ void shell_task(void *pvParameters)
 			 * finish the string and inidcate we are done.
 			 */
 			if ((ch == '\r') || (ch == '\n')) {
-				msg.str[curr_char] = '\n';
-				msg.str[curr_char+1] = '\0';
+				msg.str[curr_char] = '\0';
+				//msg.str[curr_char+1] = '\0';
 				done = -1;
 				/* Otherwise, add the character to the
 				 * response string. */
+				send_msg("\n\r");
 			}
 			else {
-				msg.str[curr_char++] = ch;
+				msg.str[curr_char++] = ch;			
+				send_byte(ch);
+				//while (!xQueueSendToBack(serial_str_queue, &msg,
+				//		         portMAX_DELAY));
 			}
 		} while (!done);
-
-		/* Once we are done building the response string, queue the
-		 * response to be sent to the RS232 port.
-		 */
 		
-		while (!xQueueSendToBack(serial_str_queue, &msg,
-		                         portMAX_DELAY));
+		
 	}
 }
 
