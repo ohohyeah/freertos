@@ -152,7 +152,7 @@ void rs232_xmit_msg_task(void *pvParameters)
 	}
 }
 
-void serial_readwrite_task(void *pvParameters)
+void shell_task(void *pvParameters)
 {
 	serial_str_msg msg;
 	char ch;
@@ -230,7 +230,7 @@ int main()
 	
 	/* Create a task to receive characters from the RS232 port and echo
 	 * them back to the RS232 port. */
-	xTaskCreate(serial_readwrite_task,
+	xTaskCreate(shell_task,
 	            (signed portCHAR *) "Serial Read/Write",
 	            512 /* stack size */, NULL,
 	            tskIDLE_PRIORITY + 10, NULL);
