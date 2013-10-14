@@ -7,7 +7,7 @@
 #include "queue.h"
 #include "semphr.h"
 #include <string.h>
-
+#include <stdarg.h>
 /* Filesystem includes */
 #include "filesystem.h"
 #include "fio.h"
@@ -87,6 +87,42 @@ void USART2_IRQHandler()
 	if (xHigherPriorityTaskWoken) {
 		taskYIELD();
 	}
+}
+
+
+void myprintf(const char *fmt, ...)
+{
+		
+	va_list args;
+ 	va_start(args, fmt);
+	//char *buf = (char *)fmt;
+	int count= 0;
+	while(fmt[count])
+	{	
+		if(fmt[count] == '%')
+		{
+			switch(fmt[++count])
+			{
+				case 'NULL':
+				continue;
+				case 's':
+				send_msg(va_arg(args, char *));
+				break;
+				case 'd':
+				send_msg(va_arg(args, int));
+				break;
+			}
+			count++;
+			
+		}
+		else
+		{
+			send_byte(fmt[count++]);
+		
+		}
+		
+	}
+	 va_end(args);
 }
 
 
@@ -178,6 +214,10 @@ void shell_task(void *pvParameters)
 		curr_char = 0;
 		done = 0;
 		send_msg("shell>");
+		/* for testing */
+		char n[5] = "YYY";
+		int a =10;
+		myprintf("dddd%syyyyyy%dwwww",n,a);
 		do {
 			/* Receive a byte from the RS232 port (this call will
 			 * block). */
