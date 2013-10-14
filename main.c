@@ -12,6 +12,12 @@
 #include "filesystem.h"
 #include "fio.h"
 
+
+#define BACKSPACE 127;
+char newline[3] = {'\r','\n','\0'};
+char backspace[3] = {'\b',' ','\b'};
+
+
 extern const char _sromfs;
 
 static void setup_hardware();
@@ -218,10 +224,6 @@ void shell_task(void *pvParameters)
 		curr_char = 0;
 		done = 0;
 		send_msg("shell>");
-		/* for testing */
-		char n[5] = "YYY";
-		int a =999999;
-		myprintf("yyyyyy%dwwww",a);
 		do {
 			/* Receive a byte from the RS232 port (this call will
 			 * block). */
@@ -233,23 +235,17 @@ void shell_task(void *pvParameters)
 			if ((ch == '\r') || (ch == '\n')) 
 			{
 				msg.str[curr_char] = '\0';
-				//msg.str[curr_char+1] = '\0';
 				done = -1;
-				/* Otherwise, add the character to the
-				 * response string. */
-			
-				send_msg("\n\r");
+				myprintf(newline);
 			}			
 			else if(ch == "\b" || ch==127 )
 			{
 				curr_char--;
-				send_msg("\b \b");
+				myprintf(backspace);
 			}
 			else {
 				msg.str[curr_char++] = ch;			
 				send_byte(ch);
-				//while (!xQueueSendToBack(serial_str_queue, &msg,
-				//		         portMAX_DELAY));
 			}
 		} while (!done);
 		
