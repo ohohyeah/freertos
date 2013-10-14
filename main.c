@@ -89,43 +89,6 @@ void USART2_IRQHandler()
 	}
 }
 
-
-void myprintf(const char *fmt, ...)
-{
-		
-	va_list args;
- 	va_start(args, fmt);
-	//char *buf = (char *)fmt;
-	int count= 0;
-	while(fmt[count])
-	{	
-		if(fmt[count] == '%')
-		{
-			switch(fmt[++count])
-			{
-				case 'NULL':
-				continue;
-				case 's':
-				send_msg(va_arg(args, char *));
-				break;
-				case 'd':
-				send_msg(va_arg(args, int));
-				break;
-			}
-			count++;
-			
-		}
-		else
-		{
-			send_byte(fmt[count++]);
-		
-		}
-		
-	}
-	 va_end(args);
-}
-
-
 void send_byte(char ch)
 {
 	/* Wait until the RS232 port can receive another byte (this semaphore
@@ -150,6 +113,47 @@ void send_msg(char *msg)
 	}
 
 }
+
+
+void myprintf(const char *fmt, ...)
+{
+		
+	va_list args;
+ 	va_start(args, fmt);
+	char out[100];
+	int count =0;
+	while(fmt[count])
+	{	
+		if(fmt[count] == '%')
+		{
+			switch(fmt[++count])
+			{
+				case 'NULL':
+				continue;
+				case 's':
+				send_msg(va_arg(args, char *));
+				break;
+				case 'd':
+				itoa(va_arg(args, int), out);
+				send_msg(out);
+				
+				break;
+			}
+			count++;
+			
+		}
+		else
+		{
+			send_byte(fmt[count++]);
+		
+		}
+		
+	}
+	 va_end(args);
+}
+
+
+
 
 char receive_byte()
 {
@@ -216,8 +220,8 @@ void shell_task(void *pvParameters)
 		send_msg("shell>");
 		/* for testing */
 		char n[5] = "YYY";
-		int a =10;
-		myprintf("dddd%syyyyyy%dwwww",n,a);
+		int a =999999;
+		myprintf("yyyyyy%dwwww",a);
 		do {
 			/* Receive a byte from the RS232 port (this call will
 			 * block). */

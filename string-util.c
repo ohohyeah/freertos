@@ -67,3 +67,36 @@ char *strncpy(char *dest, const char *src, size_t n)
 	while (n-- && (*d++ = *s++));
 	return dest;
 }
+
+void itoa(int n, char *out)
+{
+	int sign =0;
+	if(n< 0) sign =1;
+	int i = 0;
+	if( n == 0)
+		out[i++] =0;
+	else if (n <0 )
+	{
+		out[i++] = '-';
+		n = -n;
+	}		
+	while (n >0 )
+	{
+		out[i++] = '0' + (n %10);
+		n /=10;
+	}
+	out[i] ='\0';
+
+	/* reverse the array*/
+	int j = 0 + sign, k = i- 1 - sign; 
+	char temp;
+	while(j < k)
+	{
+		temp = out[j];
+		out[j] = out[k];
+		out[k] = temp;
+		j++;k--;
+	}
+}
+
+
