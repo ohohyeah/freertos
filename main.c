@@ -36,6 +36,22 @@ typedef struct {
 	char ch;
 } serial_ch_msg;
 
+
+typedef struct cmd_type {
+       char *cmd;
+       char *handler;
+       char *description;
+       } cmd_type;
+       
+ cmd_type commands[10] =
+{
+        {.cmd = "help", .handler = "ff", .description = "show all commands."},
+        {.cmd = "echo", .handler = "ff", .description = "repeat what you type in."},  
+};
+
+
+
+
 void queue_str_task(const char *str, int delay)
 {
 	serial_str_msg msg;
@@ -223,7 +239,8 @@ void shell_task(void *pvParameters)
 	while (1) {
 		curr_char = 0;
 		done = 0;
-		send_msg("shell>");
+		myprintf("shell>");
+		
 		do {
 			/* Receive a byte from the RS232 port (this call will
 			 * block). */
