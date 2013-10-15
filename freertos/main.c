@@ -65,6 +65,7 @@ void USART2_IRQHandler()
 	}
 }
 
+
 void send_byte(char ch)
 {
 	/* Wait until the RS232 port can receive another byte (this semaphore

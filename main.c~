@@ -13,9 +13,11 @@
 #include "fio.h"
 
 /* Shell includes*/
-#include "shell_task.h"
+#include "shell.h"
 
-
+#define BACKSPACE 127;
+char newline[3] = {'\r','\n','\0'};
+char backspace[3] = {'\b',' ','\b'};
 
 
 extern const char _sromfs;

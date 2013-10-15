@@ -74,7 +74,7 @@ main.bin: test-romfs.o main.c shell_task.c
 		\
 		osdebug.o \
 		string-util.o \
-		shell_task.o \
+		shell_task.c \
 		\
 		main.o
 	$(CROSS_COMPILE)objcopy -Obinary main.elf main.bin
