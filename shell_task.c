@@ -6,20 +6,42 @@
 /* define */
 #define MAX_MSG_LEN 100
 #define BACKSPACE 127
-#define MAX_COMM_COUNT 10
+#define MAX_COMM_COUNT 2
 #define MAX_COMM_PARA 5
 char newline[3] = {'\r','\n','\0'};
 char backspace[3] = {'\b',' ','\b'};
 
 
-/*command struct */
+/* custom structs */
 typedef void func_handler(int , char*[]);
 
+typedef struct cmd_type {
+       char *cmd;
+       func_handler *handler;
+       char *description;
+       } cmd_type;
+static cmd_type commands[MAX_COMM_COUNT];
 
+/* co*/
 void helpmenu(int argc, char* argv[])
 {
-	
+	myprintf("===== avaliable commands =====%s", newline);
+	int i ;
+	for(i=0 ; i <MAX_COMM_COUNT ; i++)
+	{
+		myprintf("%s\t%s%s",commands[i].cmd, commands[i].description , newline);
+	}
+	myprintf("==============================%s", newline);
 }
+
+
+static cmd_type commands[MAX_COMM_COUNT] =
+{
+        {.cmd = "help", .handler = helpmenu, .description = "show all avaliable commands."},
+        {.cmd = "echo", .handler = "ff", .description = "repeat what you type in."},  
+};       
+
+
 
 
 void cmd_parser(char *str,int argc, char *argv[]){
@@ -39,19 +61,33 @@ void cmd_parser(char *str,int argc, char *argv[]){
 }
 
 
-
-typedef struct cmd_type {
-       char *cmd;
-       func_handler *handler;
-       char *description;
-       } cmd_type;
-       
- cmd_type commands[MAX_COMM_COUNT] =
+int strcmpZ(const char *str_a, const char *str_b)
 {
-        {.cmd = "help", .handler = "ff", .description = "show all commands."},
-        {.cmd = "echo", .handler = "ff", .description = "repeat what you type in."},  
-};
+    int i = 0;
 
+    while(str_a[i]) {
+        if (str_a[i] != str_b[i]) {
+            return str_a[i] - str_b[i];
+        }
+        i++;
+    }
+    return 0;
+}
+
+void cmd_handler(int argc , char *argv[])
+{
+	int i ;
+	for(i=0 ; i <MAX_COMM_COUNT ; i++)
+	{
+	
+		if (strcmp(commands[i].cmd, argv[0])==0)	
+		{
+			commands[i].handler(argc, argv);
+			break;
+		}
+	}
+
+}
 
 
 void shell_task(void *pvParameters)
@@ -84,6 +120,7 @@ void shell_task(void *pvParameters)
 				done = -1;
 				myprintf(newline);
 				cmd_parser(msg , p_argc, p_argv);
+				cmd_handler(p_argc, p_argv);
 				myprintf(p_argv[1]);
 			}			
 			else if(ch == "\b" || ch== BACKSPACE )
