@@ -69,6 +69,7 @@ char *strncpy(char *dest, const char *src, size_t n)
 	return dest;
 }
 
+
 void itoa(int n, char *out)
 {
 	int sign =0;
@@ -100,6 +101,32 @@ void itoa(int n, char *out)
 	}
 }
 
+size_t strlen(const char *string)
+{
+    int chars = 0;
+
+    while(*string++) {
+        chars++;
+    }
+    return chars;
+}
+
+
+int strcmp(const char *a, const char *b)
+{
+        asm(
+        "strcmp_lop:                \n"
+        "   ldrb    r2, [r0],#1     \n"
+        "   ldrb    r3, [r1],#1     \n"
+        "   cmp     r2, #1          \n"
+        "   it      hi              \n"
+        "   cmphi   r2, r3          \n"
+        "   beq     strcmp_lop      \n"
+                "        sub     r0, r2, r3          \n"
+        "   bx      lr              \n"
+                :::
+        );
+}
 
 void myprintf(const char *fmt, ...)
 {
@@ -137,6 +164,4 @@ void myprintf(const char *fmt, ...)
 	}
 	 va_end(args);
 }
-
-
 
