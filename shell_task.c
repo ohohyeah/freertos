@@ -1,13 +1,13 @@
 
+/* include */
 #include "fio.h"
-
-
 
 /* define */
 #define MAX_MSG_LEN 100
 #define BACKSPACE 127
 #define MAX_COMM_COUNT 2
 #define MAX_COMM_PARA 5
+const char cmd_error[] ="invalid input. ";
 char newline[3] = {'\r','\n','\0'};
 char backspace[3] = {'\b',' ','\b'};
 
@@ -22,16 +22,24 @@ typedef struct cmd_type {
        } cmd_type;
 static cmd_type commands[MAX_COMM_COUNT];
 
-/* co*/
+/* commands */
 void helpmenu(int argc, char* argv[])
 {
-	myprintf("===== avaliable commands =====%s", newline);
-	int i ;
-	for(i=0 ; i <MAX_COMM_COUNT ; i++)
+	if (argc ==1)
 	{
-		myprintf("%s\t%s%s",commands[i].cmd, commands[i].description , newline);
+		myprintf("===== avaliable commands =====%s", newline);
+		int i ;
+		for(i=0 ; i <MAX_COMM_COUNT ; i++)
+		{
+			myprintf("%s\t%s%s",commands[i].cmd, commands[i].description , newline);
+		}
+		myprintf("==============================%s", newline);
 	}
-	myprintf("==============================%s", newline);
+	else {
+		
+		myprintf("%s%s", cmd_error,newline);
+	}
+	
 }
 
 
@@ -42,12 +50,12 @@ static cmd_type commands[MAX_COMM_COUNT] =
 };       
 
 
-
-
-void cmd_parser(char *str,int argc, char *argv[]){
+/* reference from tim37021 */
+void cmd_parser(char *str, char *argv[]){
    
         int i;
-        int count=0, p=0;
+        int p=0;
+	int argc=0;
         for(i=0; str[i]; ++i){
 
                 if(str[i]==' ')
@@ -57,29 +65,19 @@ void cmd_parser(char *str,int argc, char *argv[]){
                         p=i+1;
                 }
         }
-        argv[count++]=&str[p];
+        argv[argc++]=&str[p];
+	cmd_handler(argc, argv);
 }
 
 
-int strcmpZ(const char *str_a, const char *str_b)
-{
-    int i = 0;
 
-    while(str_a[i]) {
-        if (str_a[i] != str_b[i]) {
-            return str_a[i] - str_b[i];
-        }
-        i++;
-    }
-    return 0;
-}
 
 void cmd_handler(int argc , char *argv[])
 {
 	int i ;
 	for(i=0 ; i <MAX_COMM_COUNT ; i++)
 	{
-	
+
 		if (strcmp(commands[i].cmd, argv[0])==0)	
 		{
 			commands[i].handler(argc, argv);
@@ -97,7 +95,7 @@ void shell_task(void *pvParameters)
 	char *p_argv[MAX_COMM_PARA];
 	int curr_char;
 	int done;
-	int p_argc=0;
+	//int *p_argc =0;
 	/* Prepare the response message to be queued. */
 
 	while (1) {
@@ -119,9 +117,7 @@ void shell_task(void *pvParameters)
 				msg[curr_char] = '\0';
 				done = -1;
 				myprintf(newline);
-				cmd_parser(msg , p_argc, p_argv);
-				cmd_handler(p_argc, p_argv);
-				myprintf(p_argv[1]);
+				cmd_parser(msg , p_argv);
 			}			
 			else if(ch == "\b" || ch== BACKSPACE )
 			{
