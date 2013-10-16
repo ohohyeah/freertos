@@ -135,7 +135,7 @@ void myprintf(const char *fmt, ...)
  	va_start(args, fmt);
 	char out[100];
 	int count =0;
-	while(fmt[count])
+	for(count =0;fmt[count] != '\0'; count++)
 	{	
 		if(fmt[count] == '%')
 		{
@@ -144,20 +144,22 @@ void myprintf(const char *fmt, ...)
 				case 'NULL':
 				continue;
 				case 's':
-				send_msg(va_arg(args, char *));
+				send_msg(va_arg(args, char *));	
 				break;
 				case 'd':
 				itoa(va_arg(args, int), out);
 				send_msg(out);
-				
 				break;
+				default:
+				send_msg(fmt[count]);
 			}
-			count++;
-			
+					
 		}
+	
 		else
 		{
-			send_byte(fmt[count++]);
+						
+			send_byte(fmt[count]);
 		
 		}
 		
